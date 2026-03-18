@@ -21,7 +21,7 @@ export interface AuthResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = 'http://172.16.64.196:8888/api/auth';
+  private apiUrl = 'https://api.dsti-ums.id/api/auth';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 

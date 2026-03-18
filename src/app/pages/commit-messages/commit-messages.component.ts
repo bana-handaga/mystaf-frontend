@@ -164,7 +164,7 @@ export class CommitDetailDialogComponent {
   selector: 'app-commit-messages',
   standalone: true,
   imports: [
-    RouterLink, SlicePipe, MatCardModule, MatTableModule, MatSortModule, MatButtonModule,
+    SlicePipe, MatCardModule, MatTableModule, MatSortModule, MatButtonModule,
     MatIconModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatTooltipModule, MatDialogModule, FormsModule
   ],

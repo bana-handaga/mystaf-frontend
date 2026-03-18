@@ -46,6 +46,10 @@ import { Subscription } from 'rxjs';
                 <mat-icon matListItemIcon>commit</mat-icon>
                 <span matListItemTitle>Commit Message</span>
               </a>
+              <a mat-list-item routerLink="/commit-analysis" routerLinkActive="active-link">
+                <mat-icon matListItemIcon>analytics</mat-icon>
+                <span matListItemTitle>Commit Analisis</span>
+              </a>
               <a mat-list-item routerLink="/comments" routerLinkActive="active-link">
                 <mat-icon matListItemIcon>chat</mat-icon>
                 <span matListItemTitle>Komentar</span>
@@ -114,6 +118,10 @@ import { Subscription } from 'rxjs';
               <a routerLink="/commits" routerLinkActive="tab-active" class="tab-item">
                 <mat-icon>commit</mat-icon>
                 <span>Commit</span>
+              </a>
+              <a routerLink="/commit-analysis" routerLinkActive="tab-active" class="tab-item">
+                <mat-icon>analytics</mat-icon>
+                <span>Analisis</span>
               </a>
               <a routerLink="/comments" routerLinkActive="tab-active" class="tab-item">
                 <mat-icon>chat</mat-icon>
@@ -246,6 +254,7 @@ export class App implements OnInit, OnDestroy {
     this.router.events.subscribe(() => {
       const url = this.router.url;
       if (url.includes('dashboard')) this.pageTitle = 'Dashboard';
+      else if (url.includes('commit-analysis')) this.pageTitle = 'Commit Analisis';
       else if (url.includes('commits')) this.pageTitle = 'Commit Message';
       else if (url.includes('comments')) this.pageTitle = 'Komentar';
       else if (url.includes('projects')) this.pageTitle = 'Proyek / Apps';

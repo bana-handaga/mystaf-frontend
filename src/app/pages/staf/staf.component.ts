@@ -156,7 +156,7 @@ export class StafComponent implements OnInit {
       .set('order_by', this.sortField)
       .set('order_dir', this.sortDir);
     if (this.searchQuery) params = params.set('search', this.searchQuery);
-    this.http.get<any>('http://172.16.64.196:8888/api/auth/staff/', { params }).subscribe({
+    this.http.get<any>('https://api.dsti-ums.id/api/auth/staff/', { params }).subscribe({
       next: (data) => {
         this.staffList = data.results ?? data;
         this.totalCount = data.count ?? this.staffList.length;

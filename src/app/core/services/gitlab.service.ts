@@ -16,7 +16,7 @@ export interface ActivitySummary {
 
 @Injectable({ providedIn: 'root' })
 export class GitlabService {
-  private apiUrl = 'http://172.16.64.196:8888/api/gitlab';
+  private apiUrl = 'https://api.dsti-ums.id/api/gitlab';
 
   constructor(private http: HttpClient) {}
 

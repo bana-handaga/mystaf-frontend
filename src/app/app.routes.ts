@@ -47,5 +47,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/commit-messages/commit-messages.component').then(m => m.CommitMessagesComponent)
   },
+  {
+    path: 'commit-analysis',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/commit-analysis/commit-analysis.component').then(m => m.CommitAnalysisComponent)
+  },
   { path: '**', redirectTo: '/dashboard' }
 ];

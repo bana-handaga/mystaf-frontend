@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const API = 'http://172.16.64.196:8888/api/gitlab';
+const API = 'https://api.dsti-ums.id/api/gitlab';
 
 @Injectable({ providedIn: 'root' })
 export class CommentService {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const API = 'http://172.16.64.196:8888/api/gitlab';
+const API = 'https://api.dsti-ums.id/api/gitlab';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -33,5 +33,12 @@ export class ProjectService {
     if (filters.project_id) params = params.set('project_id', filters.project_id);
     if (filters.staf_id) params = params.set('staf_id', filters.staf_id);
     return this.http.get<any>(`${API}/commits/`, { params });
+  }
+
+  getCommitAnalysis(filters: { days?: number; staf_id?: string; project_id?: string } = {}): Observable<any> {
+    let params = new HttpParams().set('days', filters.days ?? 30);
+    if (filters.staf_id) params = params.set('staf_id', filters.staf_id);
+    if (filters.project_id) params = params.set('project_id', filters.project_id);
+    return this.http.get<any>(`${API}/commits/analysis/`, { params });
   }
 }
