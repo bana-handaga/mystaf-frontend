@@ -1,0 +1,15 @@
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Roboto, sans-serif;
+}
+
+/* Sidebar nav list label color */
+mat-sidenav mat-nav-list .mdc-list-item__primary-text {
+  color: #f2f2f2 !important;
+}
+mat-sidenav mat-nav-list .mdc-list-item:hover .mdc-list-item__primary-text {
+  color: #ffffff !important;
+}
