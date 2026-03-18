@@ -4,6 +4,7 @@ npm-debug.log*
 
 # Angular build output
 dist/
+# public/ sengaja tidak diabaikan agar build tersedia di repo
 .angular/cache/
 
 # Environment
