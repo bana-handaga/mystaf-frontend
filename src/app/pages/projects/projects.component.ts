@@ -6,6 +6,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -18,7 +19,7 @@ import { ProjectService } from '../../core/services/project.service';
   standalone: true,
   imports: [
     RouterLink, MatCardModule, MatTableModule, MatSortModule,
-    MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatProgressBarModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatChipsModule, FormsModule
   ],
@@ -41,7 +42,7 @@ import { ProjectService } from '../../core/services/project.service';
             </mat-select>
           </mat-form-field>
           <button mat-raised-button color="accent" (click)="syncProjects()" [disabled]="syncing">
-            <mat-icon>sync</mat-icon> {{ syncing ? 'Sync...' : 'Sync Proyek' }}
+            <mat-icon [class.spin]="syncing">sync</mat-icon> {{ syncing ? 'Menyinkronkan...' : 'Sync Proyek' }}
           </button>
         </div>
       </div>
@@ -68,6 +69,30 @@ import { ProjectService } from '../../core/services/project.service';
             </mat-card-content>
           </mat-card>
         </div>
+      }
+
+      <!-- Sync Progress -->
+      @if (syncing) {
+        <mat-card class="sync-progress-card">
+          <mat-card-content>
+            <div class="sync-status">
+              <mat-icon class="spin">sync</mat-icon>
+              <div class="sync-text">
+                <span class="sync-msg">{{ syncMessage }}</span>
+                <span class="sync-elapsed">{{ syncElapsed }}s</span>
+              </div>
+            </div>
+            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
+          </mat-card-content>
+        </mat-card>
+      }
+      @if (syncResult) {
+        <mat-card class="sync-result-card" [class.error]="syncError">
+          <mat-card-content>
+            <mat-icon>{{ syncError ? 'error' : 'check_circle' }}</mat-icon>
+            <span>{{ syncResult }}</span>
+          </mat-card-content>
+        </mat-card>
       }
 
       <!-- Search + Table -->
@@ -190,6 +215,20 @@ import { ProjectService } from '../../core/services/project.service';
     .empty { display: flex; flex-direction: column; align-items: center; padding: 48px; color: #999; gap: 8px; }
     .empty mat-icon { font-size: 48px; width: 48px; height: 48px; }
 
+    .sync-progress-card { margin-bottom: 16px; border-left: 4px solid #ff9800 !important; }
+    .sync-progress-card mat-card-content { padding: 12px 16px !important; }
+    .sync-status { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .sync-text { display: flex; flex-direction: column; }
+    .sync-msg { font-size: 14px; color: #555; }
+    .sync-elapsed { font-size: 12px; color: #999; }
+    .sync-result-card { margin-bottom: 16px; border-left: 4px solid #4caf50 !important; }
+    .sync-result-card.error { border-left-color: #f44336 !important; }
+    .sync-result-card mat-card-content { display: flex; align-items: center; gap: 10px; padding: 12px 16px !important; font-size: 14px; }
+    .sync-result-card mat-icon { color: #4caf50; }
+    .sync-result-card.error mat-icon { color: #f44336; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+
     @media (max-width: 768px) {
       .page { max-width: 100%; }
       .page-title { font-size: 18px; }
@@ -208,9 +247,14 @@ export class ProjectsComponent implements OnInit {
   displayedColumns = ['no', 'name', 'commits', 'contributors', 'last_activity', 'visibility', 'actions'];
   loading = false;
   syncing = false;
+  syncMessage = '';
+  syncElapsed = 0;
+  syncResult = '';
+  syncError = false;
   selectedDays = 30;
   searchQuery = '';
   private searchTimer: any;
+  private syncTimer: any;
 
   get totalProjects() { return this.projects.length; }
   get totalCommits() { return this.projects.reduce((s, p) => s + p.commit_count, 0); }
@@ -246,9 +290,27 @@ export class ProjectsComponent implements OnInit {
 
   syncProjects() {
     this.syncing = true;
+    this.syncElapsed = 0;
+    this.syncResult = '';
+    this.syncError = false;
+    this.syncMessage = 'Mengambil daftar proyek dari GitLab...';
+    this.syncTimer = setInterval(() => this.syncElapsed++, 1000);
     this.projectService.syncProjects().subscribe({
-      next: () => { this.syncing = false; this.loadProjects(); },
-      error: () => this.syncing = false
+      next: (res) => {
+        clearInterval(this.syncTimer);
+        this.syncing = false;
+        const count = res?.message?.match(/\d+/)?.[0] || '?';
+        this.syncResult = `Sinkronisasi selesai: ${count} proyek diperbarui (${this.syncElapsed}s)`;
+        this.loadProjects();
+        setTimeout(() => this.syncResult = '', 8000);
+      },
+      error: (err) => {
+        clearInterval(this.syncTimer);
+        this.syncing = false;
+        this.syncError = true;
+        this.syncResult = 'Sinkronisasi gagal: ' + (err?.error?.error || 'Periksa konfigurasi GitLab');
+        setTimeout(() => { this.syncResult = ''; this.syncError = false; }, 8000);
+      }
     });
   }
 }
