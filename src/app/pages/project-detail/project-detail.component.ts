@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -189,7 +189,7 @@ export class ProjectDetailComponent implements OnInit {
   projectId = 0;
   columns = ['rank', 'name', 'commits', 'last_commit', 'first_commit', 'actions'];
 
-  constructor(private route: ActivatedRoute, private projectService: ProjectService, private snackBar: MatSnackBar) {}
+  constructor(private route: ActivatedRoute, private projectService: ProjectService, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.projectId = Number(this.route.snapshot.paramMap.get('id'));
@@ -209,6 +209,7 @@ export class ProjectDetailComponent implements OnInit {
     this.syncDone = false;
     this.syncFail = false;
     this.syncMsg = 'Menyinkronkan commits dari GitLab...';
+    this.cdr.detectChanges();
     this.projectService.syncProjectCommits(this.projectId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;

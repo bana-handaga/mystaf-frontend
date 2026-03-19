@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -209,7 +209,7 @@ export class StafDetailComponent implements OnInit {
   selectedDays = 30;
   stafId = 0;
 
-  constructor(private route: ActivatedRoute, private gitlabService: GitlabService, private snackBar: MatSnackBar) {}
+  constructor(private route: ActivatedRoute, private gitlabService: GitlabService, private snackBar: MatSnackBar, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.stafId = Number(this.route.snapshot.paramMap.get('id'));
@@ -229,6 +229,7 @@ export class StafDetailComponent implements OnInit {
     this.syncDone = false;
     this.syncFail = false;
     this.syncMsg = 'Menyinkronkan aktivitas dari GitLab...';
+    this.cdr.detectChanges();
     this.gitlabService.syncStaf(this.stafId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;
