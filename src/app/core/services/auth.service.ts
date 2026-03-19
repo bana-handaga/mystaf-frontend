@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, tap, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
@@ -65,5 +65,11 @@ export class AuthService {
 
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/profile/`);
+  }
+
+  getStafIds(): Observable<number[]> {
+    return this.http.get<{ results: { id: number }[] }>(`${this.apiUrl}/staff/`).pipe(
+      map(res => res.results.map(s => s.id))
+    );
   }
 }

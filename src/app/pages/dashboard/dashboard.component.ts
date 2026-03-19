@@ -7,7 +7,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { from, concatMap, catchError, of } from 'rxjs';
 import { GitlabService, ActivitySummary } from '../../core/services/gitlab.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -37,7 +39,7 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
           </mat-form-field>
           <button mat-raised-button color="accent" (click)="syncAll()" [disabled]="syncing">
             <mat-icon>sync</mat-icon>
-            {{ syncing ? 'Sinkronisasi...' : 'Sync GitLab' }}
+            {{ syncProgress || (syncing ? 'Sinkronisasi...' : 'Sync GitLab') }}
           </button>
         </div>
       </div>
@@ -230,6 +232,7 @@ export class DashboardComponent implements OnInit {
   teamSummary: ActivitySummary[] = [];
   loading = false;
   syncing = false;
+  syncProgress = '';
   selectedDays = 30;
 
   get totalStats() {
@@ -240,7 +243,7 @@ export class DashboardComponent implements OnInit {
     };
   }
 
-  constructor(private gitlabService: GitlabService) {}
+  constructor(private gitlabService: GitlabService, private authService: AuthService) {}
 
   ngOnInit() { this.loadData(); }
 
@@ -263,9 +266,28 @@ export class DashboardComponent implements OnInit {
 
   syncAll() {
     this.syncing = true;
-    this.gitlabService.syncAll(this.selectedDays).subscribe({
-      next: () => { this.syncing = false; this.loadData(); },
-      error: () => this.syncing = false
+    this.syncProgress = 'Mengambil daftar staf...';
+    this.authService.getStafIds().subscribe({
+      next: (ids) => {
+        let done = 0;
+        const total = ids.length;
+        from(ids).pipe(
+          concatMap(id => this.gitlabService.syncStaf(id, this.selectedDays).pipe(
+            catchError(() => of(null))
+          ))
+        ).subscribe({
+          next: () => {
+            done++;
+            this.syncProgress = `Sinkronisasi ${done}/${total} staf...`;
+          },
+          complete: () => {
+            this.syncing = false;
+            this.syncProgress = '';
+            this.loadData();
+          }
+        });
+      },
+      error: () => { this.syncing = false; this.syncProgress = ''; }
     });
   }
 }
