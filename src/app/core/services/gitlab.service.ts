@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface ActivitySummary {
   staf: { id: number; name: string; username: string; gitlab_username: string; role: string };
@@ -16,7 +17,7 @@ export interface ActivitySummary {
 
 @Injectable({ providedIn: 'root' })
 export class GitlabService {
-  private apiUrl = 'https://api.dsti-ums.id/api/gitlab';
+  private apiUrl = `${environment.apiBase}/api/gitlab`;
 
   constructor(private http: HttpClient) {}
 

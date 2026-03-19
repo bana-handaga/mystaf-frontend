@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -317,7 +318,7 @@ export class LaporanComponent implements OnInit {
     this.loading = true;
     this.report = null;
     const params = new HttpParams().set('days', this.selectedDays);
-    this.http.get<any>('https://api.dsti-ums.id/api/gitlab/reports/', { params }).subscribe({
+    this.http.get<any>(`${environment.apiBase}/api/gitlab/reports/`, { params }).subscribe({
       next: (data) => { this.report = data; this.loading = false; },
       error: () => this.loading = false
     });

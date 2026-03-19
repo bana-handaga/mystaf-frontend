@@ -11,6 +11,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-staf',
@@ -156,7 +157,7 @@ export class StafComponent implements OnInit {
       .set('order_by', this.sortField)
       .set('order_dir', this.sortDir);
     if (this.searchQuery) params = params.set('search', this.searchQuery);
-    this.http.get<any>('https://api.dsti-ums.id/api/auth/staff/', { params }).subscribe({
+    this.http.get<any>(`${environment.apiBase}/api/auth/staff/`, { params }).subscribe({
       next: (data) => {
         this.staffList = data.results ?? data;
         this.totalCount = data.count ?? this.staffList.length;
