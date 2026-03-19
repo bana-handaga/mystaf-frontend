@@ -226,17 +226,27 @@ export class ProjectDetailComponent implements OnInit {
     this.projectService.syncProjectCommits(this.projectId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;
-        this.syncDone = true;
-        const newCommits = res?.results?.[0]?.new_commits ?? '?';
-        this.syncMsg = `Selesai: ${newCommits} commit baru disinkronkan`;
-        this.loadData();
-        setTimeout(() => this.syncMsg = '', 5000);
+        const result = res?.results?.[0];
+        const hasError = result?.status === 'error';
+        if (hasError) {
+          this.syncFail = true;
+          this.syncMsg = 'Gagal: ' + (result?.error || 'Terjadi kesalahan saat sinkronisasi');
+          setTimeout(() => this.syncMsg = '', 10000);
+        } else {
+          this.syncDone = true;
+          const newCommits = result?.new_commits ?? '?';
+          this.syncMsg = newCommits === 0
+            ? 'Sinkronisasi selesai: tidak ada commit baru (data sudah terkini)'
+            : `Selesai: ${newCommits} commit baru disinkronkan`;
+          this.loadData();
+          setTimeout(() => this.syncMsg = '', 6000);
+        }
       },
       error: (err) => {
         this.syncing = false;
         this.syncFail = true;
-        this.syncMsg = 'Gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
-        setTimeout(() => this.syncMsg = '', 8000);
+        this.syncMsg = 'Gagal: ' + (err?.error?.error || err?.message || 'Terjadi kesalahan');
+        setTimeout(() => this.syncMsg = '', 10000);
       }
     });
   }

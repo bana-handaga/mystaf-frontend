@@ -233,17 +233,27 @@ export class StafDetailComponent implements OnInit {
     this.gitlabService.syncStaf(this.stafId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;
-        this.syncDone = true;
-        const synced = res?.results?.[0]?.synced ?? '?';
-        this.syncMsg = `Selesai: ${synced} aktivitas baru disinkronkan`;
-        this.loadData();
-        setTimeout(() => this.syncMsg = '', 5000);
+        const result = res?.results?.[0];
+        const hasError = result?.status === 'error';
+        if (hasError) {
+          this.syncFail = true;
+          this.syncMsg = 'Gagal: ' + (result?.error || 'Terjadi kesalahan saat sinkronisasi');
+          setTimeout(() => this.syncMsg = '', 10000);
+        } else {
+          this.syncDone = true;
+          const synced = result?.synced ?? '?';
+          this.syncMsg = synced === 0
+            ? 'Sinkronisasi selesai: tidak ada aktivitas baru (data sudah terkini)'
+            : `Selesai: ${synced} aktivitas baru disinkronkan`;
+          this.loadData();
+          setTimeout(() => this.syncMsg = '', 6000);
+        }
       },
       error: (err) => {
         this.syncing = false;
         this.syncFail = true;
-        this.syncMsg = 'Gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
-        setTimeout(() => this.syncMsg = '', 8000);
+        this.syncMsg = 'Gagal: ' + (err?.error?.error || err?.message || 'Terjadi kesalahan');
+        setTimeout(() => this.syncMsg = '', 10000);
       }
     });
   }
