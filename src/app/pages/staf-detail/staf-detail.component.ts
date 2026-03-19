@@ -141,6 +141,15 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
         </mat-card-content>
       </mat-card>
     </div> }
+
+    @if (syncing || syncMsg) {
+      <div class="sync-banner" [class.success]="syncDone && !syncFail" [class.fail]="syncFail">
+        @if (syncing) { <span class="sync-spinner"></span> }
+        @if (!syncing && syncDone && !syncFail) { <span>✅</span> }
+        @if (syncFail) { <span>❌</span> }
+        <span>{{ syncMsg }}</span>
+      </div>
+    }
   `,
   styles: [`
     .loading-center { display: flex; justify-content: center; padding: 64px; }
@@ -171,6 +180,11 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
     .no-data { color: #999; font-style: italic; padding: 16px 0; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
+    .sync-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1565c0; color: #fff; padding: 12px 24px; border-radius: 6px; display: flex; align-items: center; gap: 10px; z-index: 99999; box-shadow: 0 4px 16px rgba(0,0,0,0.3); font-size: 14px; white-space: nowrap; }
+    .sync-banner.success { background: #2e7d32; }
+    .sync-banner.fail { background: #c62828; }
+    @keyframes spin2 { to { transform: rotate(360deg); } }
+    .sync-spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin2 0.8s linear infinite; flex-shrink: 0; }
 
     @media (max-width: 768px) {
       .detail-container { max-width: 100%; }
@@ -189,6 +203,9 @@ export class StafDetailComponent implements OnInit {
   summary: ActivitySummary | null = null;
   loading = false;
   syncing = false;
+  syncMsg = '';
+  syncDone = false;
+  syncFail = false;
   selectedDays = 30;
   stafId = 0;
 
@@ -209,20 +226,23 @@ export class StafDetailComponent implements OnInit {
 
   sync() {
     this.syncing = true;
-    const ref = this.snackBar.open('⏳ Menyinkronkan aktivitas dari GitLab...', '', { duration: 0, panelClass: 'snack-info' });
+    this.syncDone = false;
+    this.syncFail = false;
+    this.syncMsg = 'Menyinkronkan aktivitas dari GitLab...';
     this.gitlabService.syncStaf(this.stafId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;
-        ref.dismiss();
+        this.syncDone = true;
         const synced = res?.results?.[0]?.synced ?? '?';
-        this.snackBar.open(`✅ Selesai: ${synced} aktivitas baru disinkronkan`, 'Tutup', { duration: 6000, panelClass: 'snack-success' });
+        this.syncMsg = `Selesai: ${synced} aktivitas baru disinkronkan`;
         this.loadData();
+        setTimeout(() => this.syncMsg = '', 5000);
       },
       error: (err) => {
         this.syncing = false;
-        ref.dismiss();
-        const msg = err?.error?.error || 'Terjadi kesalahan';
-        this.snackBar.open(`❌ Gagal: ${msg}`, 'Tutup', { duration: 8000, panelClass: 'snack-error' });
+        this.syncFail = true;
+        this.syncMsg = 'Gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
+        setTimeout(() => this.syncMsg = '', 8000);
       }
     });
   }

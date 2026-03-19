@@ -131,6 +131,15 @@ import { ProjectService } from '../../core/services/project.service';
         </mat-card>
       </div>
     }
+
+    @if (syncing || syncMsg) {
+      <div class="sync-banner" [class.success]="syncDone && !syncFail" [class.fail]="syncFail">
+        @if (syncing) { <span class="sync-spinner"></span> }
+        @if (!syncing && syncDone && !syncFail) { <span>✅</span> }
+        @if (syncFail) { <span>❌</span> }
+        <span>{{ syncMsg }}</span>
+      </div>
+    }
   `,
   styles: [`
     .loading-center { display: flex; justify-content: center; padding: 64px; }
@@ -162,12 +171,20 @@ import { ProjectService } from '../../core/services/project.service';
 
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
+    .sync-banner { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1565c0; color: #fff; padding: 12px 24px; border-radius: 6px; display: flex; align-items: center; gap: 10px; z-index: 99999; box-shadow: 0 4px 16px rgba(0,0,0,0.3); font-size: 14px; white-space: nowrap; }
+    .sync-banner.success { background: #2e7d32; }
+    .sync-banner.fail { background: #c62828; }
+    @keyframes spin2 { to { transform: rotate(360deg); } }
+    .sync-spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin2 0.8s linear infinite; flex-shrink: 0; }
   `]
 })
 export class ProjectDetailComponent implements OnInit {
   data: any = null;
   loading = false;
   syncing = false;
+  syncMsg = '';
+  syncDone = false;
+  syncFail = false;
   selectedDays = 30;
   projectId = 0;
   columns = ['rank', 'name', 'commits', 'last_commit', 'first_commit', 'actions'];
@@ -189,20 +206,23 @@ export class ProjectDetailComponent implements OnInit {
 
   sync() {
     this.syncing = true;
-    const ref = this.snackBar.open('⏳ Menyinkronkan commits dari GitLab...', '', { duration: 0, panelClass: 'snack-info' });
+    this.syncDone = false;
+    this.syncFail = false;
+    this.syncMsg = 'Menyinkronkan commits dari GitLab...';
     this.projectService.syncProjectCommits(this.projectId, this.selectedDays).subscribe({
       next: (res) => {
         this.syncing = false;
-        ref.dismiss();
+        this.syncDone = true;
         const newCommits = res?.results?.[0]?.new_commits ?? '?';
-        this.snackBar.open(`✅ Selesai: ${newCommits} commit baru disinkronkan`, 'Tutup', { duration: 6000, panelClass: 'snack-success' });
+        this.syncMsg = `Selesai: ${newCommits} commit baru disinkronkan`;
         this.loadData();
+        setTimeout(() => this.syncMsg = '', 5000);
       },
       error: (err) => {
         this.syncing = false;
-        ref.dismiss();
-        const msg = err?.error?.error || 'Terjadi kesalahan';
-        this.snackBar.open(`❌ Gagal: ${msg}`, 'Tutup', { duration: 8000, panelClass: 'snack-error' });
+        this.syncFail = true;
+        this.syncMsg = 'Gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
+        setTimeout(() => this.syncMsg = '', 8000);
       }
     });
   }
