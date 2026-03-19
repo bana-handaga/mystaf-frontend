@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,7 +17,7 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
   standalone: true,
   imports: [
     RouterLink, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule,
-    MatChipsModule, MatIconModule, MatButtonModule, MatSelectModule,
+    MatSnackBarModule, MatChipsModule, MatIconModule, MatButtonModule, MatSelectModule,
     MatFormFieldModule, FormsModule
   ],
   template: `
@@ -55,24 +56,8 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
         </div>
       </div>
 
-      <!-- Sync Progress -->
       @if (syncing) {
-        <div class="sync-progress">
-          <div class="sync-status">
-            <mat-icon class="spin">sync</mat-icon>
-            <div class="sync-text">
-              <span class="sync-msg">{{ syncMessage }}</span>
-              <span class="sync-elapsed">{{ syncElapsed }}s</span>
-            </div>
-          </div>
-          <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-        </div>
-      }
-      @if (syncResult) {
-        <div class="sync-result" [class.error]="syncError">
-          <mat-icon>{{ syncError ? 'error' : 'check_circle' }}</mat-icon>
-          <span>{{ syncResult }}</span>
-        </div>
+        <mat-progress-bar mode="indeterminate" color="accent" style="margin-bottom:12px;border-radius:4px"></mat-progress-bar>
       }
 
       <!-- Stats Cards -->
@@ -184,16 +169,6 @@ import { GitlabService, ActivitySummary } from '../../core/services/gitlab.servi
     .day-label { font-size: 9px; color: #999; margin-top: 2px; writing-mode: vertical-rl; height: 30px; }
 
     .no-data { color: #999; font-style: italic; padding: 16px 0; }
-
-    .sync-progress { background: #fff8e1; border-left: 4px solid #ff9800; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; }
-    .sync-status { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .sync-text { display: flex; flex-direction: column; }
-    .sync-msg { font-size: 14px; color: #555; }
-    .sync-elapsed { font-size: 12px; color: #999; }
-    .sync-result { display: flex; align-items: center; gap: 10px; padding: 10px 16px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #4caf50; background: #f1f8e9; font-size: 14px; }
-    .sync-result.error { border-left-color: #f44336; background: #fce4ec; }
-    .sync-result mat-icon { color: #4caf50; }
-    .sync-result.error mat-icon { color: #f44336; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
 
@@ -214,15 +189,10 @@ export class StafDetailComponent implements OnInit {
   summary: ActivitySummary | null = null;
   loading = false;
   syncing = false;
-  syncMessage = '';
-  syncElapsed = 0;
-  syncResult = '';
-  syncError = false;
   selectedDays = 30;
   stafId = 0;
-  private syncTimer: any;
 
-  constructor(private route: ActivatedRoute, private gitlabService: GitlabService) {}
+  constructor(private route: ActivatedRoute, private gitlabService: GitlabService, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
     this.stafId = Number(this.route.snapshot.paramMap.get('id'));
@@ -239,26 +209,20 @@ export class StafDetailComponent implements OnInit {
 
   sync() {
     this.syncing = true;
-    this.syncElapsed = 0;
-    this.syncResult = '';
-    this.syncError = false;
-    this.syncMessage = `Mengambil aktivitas ${this.selectedDays} hari terakhir dari GitLab...`;
-    this.syncTimer = setInterval(() => this.syncElapsed++, 1000);
+    const ref = this.snackBar.open('⏳ Menyinkronkan aktivitas dari GitLab...', '', { duration: 0, panelClass: 'snack-info' });
     this.gitlabService.syncStaf(this.stafId, this.selectedDays).subscribe({
       next: (res) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
+        ref.dismiss();
         const synced = res?.results?.[0]?.synced ?? '?';
-        this.syncResult = `Selesai: ${synced} aktivitas baru disinkronkan (${this.syncElapsed}s)`;
+        this.snackBar.open(`✅ Selesai: ${synced} aktivitas baru disinkronkan`, 'Tutup', { duration: 6000, panelClass: 'snack-success' });
         this.loadData();
-        setTimeout(() => this.syncResult = '', 8000);
       },
       error: (err) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
-        this.syncError = true;
-        this.syncResult = 'Sinkronisasi gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
-        setTimeout(() => { this.syncResult = ''; this.syncError = false; }, 8000);
+        ref.dismiss();
+        const msg = err?.error?.error || 'Terjadi kesalahan';
+        this.snackBar.open(`❌ Gagal: ${msg}`, 'Tutup', { duration: 8000, panelClass: 'snack-error' });
       }
     });
   }

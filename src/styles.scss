@@ -13,3 +13,12 @@ mat-sidenav mat-nav-list .mdc-list-item__primary-text {
 mat-sidenav mat-nav-list .mdc-list-item:hover .mdc-list-item__primary-text {
   color: #ffffff !important;
 }
+
+/* Snackbar sync status styles */
+.snack-info .mdc-snackbar__surface { background: #1565c0 !important; color: #fff !important; }
+.snack-success .mdc-snackbar__surface { background: #2e7d32 !important; color: #fff !important; }
+.snack-error .mdc-snackbar__surface { background: #c62828 !important; color: #fff !important; }
+.snack-info .mat-mdc-snack-bar-label,
+.snack-success .mat-mdc-snack-bar-label,
+.snack-error .mat-mdc-snack-bar-label { color: #fff !important; font-size: 14px !important; }
+.snack-info .mat-mdc-button, .snack-success .mat-mdc-button, .snack-error .mat-mdc-button { color: #fff !important; }

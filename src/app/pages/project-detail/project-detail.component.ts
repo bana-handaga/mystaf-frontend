@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,7 @@ import { ProjectService } from '../../core/services/project.service';
   standalone: true,
   imports: [
     RouterLink, MatCardModule, MatButtonModule, MatIconModule,
-    MatProgressSpinnerModule, MatProgressBarModule, MatTableModule, MatSelectModule, FormsModule
+    MatProgressSpinnerModule, MatProgressBarModule, MatSnackBarModule, MatTableModule, MatSelectModule, FormsModule
   ],
   template: `
     @if (loading) { <div class="loading-center"><mat-spinner></mat-spinner></div> }
@@ -52,24 +53,8 @@ import { ProjectService } from '../../core/services/project.service';
           </div>
         </div>
 
-        <!-- Sync Progress -->
         @if (syncing) {
-          <div class="sync-progress">
-            <div class="sync-status">
-              <mat-icon class="spin">sync</mat-icon>
-              <div class="sync-text">
-                <span class="sync-msg">{{ syncMessage }}</span>
-                <span class="sync-elapsed">{{ syncElapsed }}s</span>
-              </div>
-            </div>
-            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-          </div>
-        }
-        @if (syncResult) {
-          <div class="sync-result" [class.error]="syncError">
-            <mat-icon>{{ syncError ? 'error' : 'check_circle' }}</mat-icon>
-            <span>{{ syncResult }}</span>
-          </div>
+          <mat-progress-bar mode="indeterminate" color="accent" style="margin-bottom:12px;border-radius:4px"></mat-progress-bar>
         }
 
         <!-- Stats -->
@@ -175,15 +160,6 @@ import { ProjectService } from '../../core/services/project.service';
     .commit-bar { display: inline-block; height: 12px; background: #1976d2; border-radius: 6px; min-width: 4px; }
     .commit-num { font-weight: 700; color: #1976d2; min-width: 24px; }
 
-    .sync-progress { background: #fff8e1; border-left: 4px solid #ff9800; border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; }
-    .sync-status { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .sync-text { display: flex; flex-direction: column; }
-    .sync-msg { font-size: 14px; color: #555; }
-    .sync-elapsed { font-size: 12px; color: #999; }
-    .sync-result { display: flex; align-items: center; gap: 10px; padding: 10px 16px; margin-bottom: 16px; border-radius: 4px; border-left: 4px solid #4caf50; background: #f1f8e9; font-size: 14px; }
-    .sync-result.error { border-left-color: #f44336; background: #fce4ec; }
-    .sync-result mat-icon { color: #4caf50; }
-    .sync-result.error mat-icon { color: #f44336; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
   `]
@@ -192,16 +168,11 @@ export class ProjectDetailComponent implements OnInit {
   data: any = null;
   loading = false;
   syncing = false;
-  syncMessage = '';
-  syncElapsed = 0;
-  syncResult = '';
-  syncError = false;
   selectedDays = 30;
   projectId = 0;
   columns = ['rank', 'name', 'commits', 'last_commit', 'first_commit', 'actions'];
-  private syncTimer: any;
 
-  constructor(private route: ActivatedRoute, private projectService: ProjectService) {}
+  constructor(private route: ActivatedRoute, private projectService: ProjectService, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
     this.projectId = Number(this.route.snapshot.paramMap.get('id'));
@@ -218,26 +189,20 @@ export class ProjectDetailComponent implements OnInit {
 
   sync() {
     this.syncing = true;
-    this.syncElapsed = 0;
-    this.syncResult = '';
-    this.syncError = false;
-    this.syncMessage = `Mengambil commits ${this.selectedDays} hari terakhir dari GitLab...`;
-    this.syncTimer = setInterval(() => this.syncElapsed++, 1000);
+    const ref = this.snackBar.open('⏳ Menyinkronkan commits dari GitLab...', '', { duration: 0, panelClass: 'snack-info' });
     this.projectService.syncProjectCommits(this.projectId, this.selectedDays).subscribe({
       next: (res) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
+        ref.dismiss();
         const newCommits = res?.results?.[0]?.new_commits ?? '?';
-        this.syncResult = `Selesai: ${newCommits} commit baru disinkronkan (${this.syncElapsed}s)`;
+        this.snackBar.open(`✅ Selesai: ${newCommits} commit baru disinkronkan`, 'Tutup', { duration: 6000, panelClass: 'snack-success' });
         this.loadData();
-        setTimeout(() => this.syncResult = '', 8000);
       },
       error: (err) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
-        this.syncError = true;
-        this.syncResult = 'Sinkronisasi gagal: ' + (err?.error?.error || 'Terjadi kesalahan');
-        setTimeout(() => { this.syncResult = ''; this.syncError = false; }, 8000);
+        ref.dismiss();
+        const msg = err?.error?.error || 'Terjadi kesalahan';
+        this.snackBar.open(`❌ Gagal: ${msg}`, 'Tutup', { duration: 8000, panelClass: 'snack-error' });
       }
     });
   }

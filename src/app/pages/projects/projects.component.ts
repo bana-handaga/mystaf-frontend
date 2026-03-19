@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -20,7 +21,7 @@ import { ProjectService } from '../../core/services/project.service';
   imports: [
     RouterLink, MatCardModule, MatTableModule, MatSortModule,
     MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatProgressBarModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule,
+    MatSnackBarModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatChipsModule, FormsModule
   ],
   template: `
@@ -71,28 +72,8 @@ import { ProjectService } from '../../core/services/project.service';
         </div>
       }
 
-      <!-- Sync Progress -->
       @if (syncing) {
-        <mat-card class="sync-progress-card">
-          <mat-card-content>
-            <div class="sync-status">
-              <mat-icon class="spin">sync</mat-icon>
-              <div class="sync-text">
-                <span class="sync-msg">{{ syncMessage }}</span>
-                <span class="sync-elapsed">{{ syncElapsed }}s</span>
-              </div>
-            </div>
-            <mat-progress-bar mode="indeterminate" color="accent"></mat-progress-bar>
-          </mat-card-content>
-        </mat-card>
-      }
-      @if (syncResult) {
-        <mat-card class="sync-result-card" [class.error]="syncError">
-          <mat-card-content>
-            <mat-icon>{{ syncError ? 'error' : 'check_circle' }}</mat-icon>
-            <span>{{ syncResult }}</span>
-          </mat-card-content>
-        </mat-card>
+        <mat-progress-bar mode="indeterminate" color="accent" style="margin-bottom:12px;border-radius:4px"></mat-progress-bar>
       }
 
       <!-- Search + Table -->
@@ -215,17 +196,6 @@ import { ProjectService } from '../../core/services/project.service';
     .empty { display: flex; flex-direction: column; align-items: center; padding: 48px; color: #999; gap: 8px; }
     .empty mat-icon { font-size: 48px; width: 48px; height: 48px; }
 
-    .sync-progress-card { margin-bottom: 16px; border-left: 4px solid #ff9800 !important; }
-    .sync-progress-card mat-card-content { padding: 12px 16px !important; }
-    .sync-status { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .sync-text { display: flex; flex-direction: column; }
-    .sync-msg { font-size: 14px; color: #555; }
-    .sync-elapsed { font-size: 12px; color: #999; }
-    .sync-result-card { margin-bottom: 16px; border-left: 4px solid #4caf50 !important; }
-    .sync-result-card.error { border-left-color: #f44336 !important; }
-    .sync-result-card mat-card-content { display: flex; align-items: center; gap: 10px; padding: 12px 16px !important; font-size: 14px; }
-    .sync-result-card mat-icon { color: #4caf50; }
-    .sync-result-card.error mat-icon { color: #f44336; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
 
@@ -247,20 +217,15 @@ export class ProjectsComponent implements OnInit {
   displayedColumns = ['no', 'name', 'commits', 'contributors', 'last_activity', 'visibility', 'actions'];
   loading = false;
   syncing = false;
-  syncMessage = '';
-  syncElapsed = 0;
-  syncResult = '';
-  syncError = false;
   selectedDays = 30;
   searchQuery = '';
   private searchTimer: any;
-  private syncTimer: any;
 
   get totalProjects() { return this.projects.length; }
   get totalCommits() { return this.projects.reduce((s, p) => s + p.commit_count, 0); }
   get totalContributors() { return new Set(this.projects.flatMap(p => p.contributor_count)).size; }
 
-  constructor(private projectService: ProjectService) {}
+  constructor(private projectService: ProjectService, private snackBar: MatSnackBar) {}
 
   ngOnInit() { this.loadProjects(); }
 
@@ -290,26 +255,20 @@ export class ProjectsComponent implements OnInit {
 
   syncProjects() {
     this.syncing = true;
-    this.syncElapsed = 0;
-    this.syncResult = '';
-    this.syncError = false;
-    this.syncMessage = 'Mengambil daftar proyek dari GitLab...';
-    this.syncTimer = setInterval(() => this.syncElapsed++, 1000);
+    const ref = this.snackBar.open('⏳ Menyinkronkan proyek dari GitLab...', '', { duration: 0, panelClass: 'snack-info' });
     this.projectService.syncProjects().subscribe({
       next: (res) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
+        ref.dismiss();
         const count = res?.message?.match(/\d+/)?.[0] || '?';
-        this.syncResult = `Sinkronisasi selesai: ${count} proyek diperbarui (${this.syncElapsed}s)`;
+        this.snackBar.open(`✅ Selesai: ${count} proyek disinkronkan`, 'Tutup', { duration: 6000, panelClass: 'snack-success' });
         this.loadProjects();
-        setTimeout(() => this.syncResult = '', 8000);
       },
       error: (err) => {
-        clearInterval(this.syncTimer);
         this.syncing = false;
-        this.syncError = true;
-        this.syncResult = 'Sinkronisasi gagal: ' + (err?.error?.error || 'Periksa konfigurasi GitLab');
-        setTimeout(() => { this.syncResult = ''; this.syncError = false; }, 8000);
+        ref.dismiss();
+        const msg = err?.error?.error || 'Periksa konfigurasi GitLab';
+        this.snackBar.open(`❌ Gagal: ${msg}`, 'Tutup', { duration: 8000, panelClass: 'snack-error' });
       }
     });
   }
