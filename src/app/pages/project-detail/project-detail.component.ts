@@ -83,6 +83,7 @@ import { ProjectService } from '../../core/services/project.service';
         <mat-card>
           <mat-card-header><mat-card-title>Kontributor ({{ selectedDays }} hari terakhir)</mat-card-title></mat-card-header>
           <mat-card-content>
+            <div class="table-scroll">
             <table mat-table [dataSource]="data.contributors" class="full-width">
               <ng-container matColumnDef="rank">
                 <th mat-header-cell *matHeaderCellDef>#</th>
@@ -127,6 +128,7 @@ import { ProjectService } from '../../core/services/project.service';
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;" class="table-row"></tr>
             </table>
+            </div>
           </mat-card-content>
         </mat-card>
       </div>
@@ -168,6 +170,17 @@ import { ProjectService } from '../../core/services/project.service';
     .commit-bar-wrap { display: flex; align-items: center; gap: 8px; }
     .commit-bar { display: inline-block; height: 12px; background: #1976d2; border-radius: 6px; min-width: 4px; }
     .commit-num { font-weight: 700; color: #1976d2; min-width: 24px; }
+
+    @media (max-width: 768px) {
+      .detail { max-width: 100%; }
+      .page-header { gap: 10px; margin-bottom: 16px; }
+      .header-actions { width: 100%; justify-content: flex-end; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+      .sn { font-size: 20px; }
+      td, th { padding: 8px 10px !important; font-size: 12px !important; }
+      .mat-column-rank, .mat-column-first_commit, .mat-column-last_commit { display: none !important; }
+      .commit-bar { display: none; }
+    }
 
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }

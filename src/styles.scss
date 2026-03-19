@@ -14,6 +14,23 @@ mat-sidenav mat-nav-list .mdc-list-item:hover .mdc-list-item__primary-text {
   color: #ffffff !important;
 }
 
+/* Fix mat-card clipping horizontal table scroll */
+mat-card, .mat-mdc-card, .mdc-card { overflow: visible !important; }
+mat-card-content, .mat-mdc-card-content { overflow: visible !important; }
+
+/* Global table scroll wrapper */
+.table-scroll {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  display: block;
+}
+.table-scroll table,
+.table-scroll mat-table {
+  width: 100%;
+  min-width: 480px;
+}
+
 /* Snackbar sync status styles */
 .snack-info .mdc-snackbar__surface { background: #1565c0 !important; color: #fff !important; }
 .snack-success .mdc-snackbar__surface { background: #2e7d32 !important; color: #fff !important; }

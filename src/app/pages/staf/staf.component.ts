@@ -106,7 +106,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
     .search-field { flex: 1; min-width: 180px; }
     .period-field { width: 130px; }
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .full-width { width: 100%; border-radius: 8px; overflow: hidden; }
+    .full-width { width: 100%; }
     .loading-center { display: flex; justify-content: center; padding: 40px; }
     .empty { text-align: center; padding: 32px; color: #999; }
     .center { text-align: center !important; }
