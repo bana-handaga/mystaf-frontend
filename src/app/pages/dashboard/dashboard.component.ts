@@ -150,11 +150,18 @@ import { AuthService } from '../../core/services/auth.service';
         </div>
       }
 
+      @if (syncError) {
+        <div class="error-banner">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ syncError }}</span>
+        </div>
+      }
+
       @if (!loading && teamSummary.length === 0) {
         <div class="empty-state">
           <mat-icon>info_outline</mat-icon>
           <h3>Belum ada data aktivitas</h3>
-          <p>Pastikan konfigurasi GitLab sudah diatur dan staf memiliki gitlab_username.</p>
+          <p>Klik "Sync GitLab" untuk mengambil data aktivitas. Pastikan token GitLab masih aktif.</p>
           <button mat-raised-button color="primary" (click)="syncAll()">
             <mat-icon>sync</mat-icon> Mulai Sinkronisasi
           </button>
@@ -212,6 +219,8 @@ import { AuthService } from '../../core/services/auth.service';
     .empty-state mat-icon { font-size: 64px; width: 64px; height: 64px; }
     .empty-state h3 { margin: 0; color: #666; }
     .empty-state p { margin: 0; text-align: center; }
+    .error-banner { display: flex; align-items: center; gap: 10px; background: #fdecea; border: 1px solid #f44336; color: #b71c1c; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
+    .error-banner mat-icon { color: #f44336; }
 
     @media (max-width: 768px) {
       .dashboard { max-width: 100%; }
@@ -233,6 +242,7 @@ export class DashboardComponent implements OnInit {
   loading = false;
   syncing = false;
   syncProgress = '';
+  syncError = '';
   selectedDays = 30;
 
   get totalStats() {
@@ -266,6 +276,7 @@ export class DashboardComponent implements OnInit {
 
   syncAll() {
     this.syncing = true;
+    this.syncError = '';
     this.syncProgress = 'Mengambil daftar staf...';
     this.authService.getStafIds().subscribe({
       next: (ids) => {
@@ -273,12 +284,18 @@ export class DashboardComponent implements OnInit {
         const total = ids.length;
         from(ids).pipe(
           concatMap(id => this.gitlabService.syncStaf(id, this.selectedDays).pipe(
-            catchError(() => of(null))
+            catchError((err) => {
+              const msg = err?.error?.error || err?.message || 'Gagal sinkronisasi';
+              this.syncError = msg;
+              return of(null);
+            })
           ))
         ).subscribe({
-          next: () => {
-            done++;
-            this.syncProgress = `Sinkronisasi ${done}/${total} staf...`;
+          next: (res: any) => {
+            if (res !== null) {
+              done++;
+              this.syncProgress = `Sinkronisasi ${done}/${total} staf...`;
+            }
           },
           complete: () => {
             this.syncing = false;
@@ -287,7 +304,11 @@ export class DashboardComponent implements OnInit {
           }
         });
       },
-      error: () => { this.syncing = false; this.syncProgress = ''; }
+      error: (err) => {
+        this.syncing = false;
+        this.syncProgress = '';
+        this.syncError = err?.error?.detail || 'Gagal mengambil daftar staf.';
+      }
     });
   }
 }

@@ -58,6 +58,11 @@ import { Subscription } from 'rxjs';
                 <mat-icon matListItemIcon>summarize</mat-icon>
                 <span matListItemTitle>Laporan</span>
               </a>
+              <mat-divider style="margin: 8px 0; border-color: rgba(255,255,255,0.12)"></mat-divider>
+              <a mat-list-item routerLink="/settings" routerLinkActive="active-link">
+                <mat-icon matListItemIcon>settings</mat-icon>
+                <span matListItemTitle>Pengaturan</span>
+              </a>
             </mat-nav-list>
           </mat-sidenav>
         }
@@ -134,6 +139,10 @@ import { Subscription } from 'rxjs';
               <a routerLink="/laporan" routerLinkActive="tab-active" class="tab-item">
                 <mat-icon>summarize</mat-icon>
                 <span>Laporan</span>
+              </a>
+              <a routerLink="/settings" routerLinkActive="tab-active" class="tab-item">
+                <mat-icon>settings</mat-icon>
+                <span>Pengaturan</span>
               </a>
             </nav>
           }
@@ -269,6 +278,7 @@ export class App implements OnInit, OnDestroy {
       else if (url.includes('staf')) this.pageTitle = 'Staf';
       else if (url.includes('laporan')) this.pageTitle = 'Laporan Pimpinan';
       else if (url.includes('profile')) this.pageTitle = 'Profil Saya';
+      else if (url.includes('settings')) this.pageTitle = 'Pengaturan';
     });
   }
 

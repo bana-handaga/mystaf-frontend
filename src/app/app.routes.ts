@@ -57,5 +57,10 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./pages/laporan/laporan.component').then(m => m.LaporanComponent)
   },
+  {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () => import('./pages/settings/settings.component').then(m => m.SettingsComponent)
+  },
   { path: '**', redirectTo: '/dashboard' }
 ];
